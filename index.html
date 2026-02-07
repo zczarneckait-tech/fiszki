@@ -180,6 +180,31 @@ pytanie,odpowiedź
       localStorage.setItem(LS_KEY, JSON.stringify(cards));
       renderAll();
     }
+    // --- AUTOLOAD CSV (GitHub Pages) ---
+const DEFAULT_CSV_URL = "./fiszki_psychometria_FINAL_verified.csv";
+
+// Wczytaj domyślną talię tylko wtedy, gdy localStorage jest pusty
+async function autoloadDefaultDeckIfEmpty() {
+  if (cards && cards.length > 0) return; // ktoś już ma talię w przeglądarce
+
+  try {
+    const res = await fetch(DEFAULT_CSV_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error("Nie mogę pobrać CSV: " + res.status);
+
+    const text = await res.text();
+    const { added } = importFromCsvText(text);
+
+    // jeśli coś się wczytało, startujemy sesję i zapisujemy
+    if (added > 0) {
+      startSession();
+      save();
+      console.log("Autoload: wczytano kart:", added);
+    }
+  } catch (e) {
+    console.warn("Autoload nie zadziałał:", e);
+  }
+}
+
 
     function load() {
       try {
@@ -480,7 +505,10 @@ pytanie,odpowiedź
     });
 
     load();
+    autoloadDefaultDeckIfEmpty();
+
   </script>
 </body>
 </html>
+
 
